@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sherpa AI Prompt Library</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #1a5276;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .search-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 20px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: #3498db;
+        }
+
+        .search-input::placeholder {
+            color: #999;
+        }
+
+        .results-info {
+            margin-top: 12px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            color: #555;
+        }
+
+        .filter-btn:hover {
+            border-color: #3498db;
+            color: #3498db;
+        }
+
+        .filter-btn.active {
+            background: #1a5276;
+            border-color: #1a5276;
+            color: white;
+        }
+
+        .prompts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .prompt-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid #1a5276;
+        }
+
+        .prompt-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        }
+
+        .prompt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+
+        .prompt-category {
+            background: #1a5276;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        .prompt-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        .prompt-text {
+            color: #444;
+            font-size: 14px;
+            margin-bottom: 12px;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #3498db;
+        }
+
+        .prompt-insight {
+            color: #666;
+            font-size: 13px;
+            font-style: italic;
+            margin-bottom: 12px;
+        }
+
+        .prompt-insight strong {
+            color: #1a5276;
+            font-style: normal;
+        }
+
+        .prompt-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            background: #e8f4f8;
+            color: #2471a3;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-results-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .no-results h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .copy-btn {
+            background: #e8f4f8;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #2471a3;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .copy-btn.copied {
+            background: #27ae60;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .prompts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Sherpa AI Prompt Library</h1>
+            <p>Search and discover prompts to unlock insights from your data</p>
+        </div>
+
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search prompts by keyword, category, or tag...">
+            <div class="results-info" id="resultsInfo">Showing all prompts</div>
+            <div class="filters" id="categoryFilters"></div>
+        </div>
+
+        <div class="prompts-grid" id="promptsContainer"></div>
+    </div>
+
+    <script>
+        const prompts = [
+            // INVENTORY & STOCK (12 prompts)
+            {
+                category: "Inventory & Stock",
+                prompt: "Which SKUs have sold below forecast for the past 30 days and are accumulating excess stock?",
+                insight: "Spot slow movers for potential markdowns or ad pulls.",
+                tags: ["Buying", "Monthly", "Alert", "Shopify"]
+            },
+            {
+                category: "Inventory & Stock",
+                prompt: "Show me the top 5 fastest-selling products with fewer than 10 days of inventory left and high forecasted demand.",
+                insight: "Trigger urgent restock decisions.",
+                tags: ["Buying", "Daily", "Alert", "Shopify"]
+            },
+            {
+                category: "Inventory & Stock",
+                prompt: "Generate a reorder list for products expected to go below safety stock in the next 21 days.",
+                insight: "Enable smart replenishment decisions.",
+                tags: ["Buying", "Weekly", "Planning", "Shopify"]
+            },
+            {
+                category: "Inventory & Stock",
+                prompt: "Flag any procurement decisions that could lead to overstock based on trailing 90-day sell-through.",
+                insight: "Prevent cash flow traps.",
+                tags: ["Buying", "Monthly", "Alert", "Shopify"]
+            },
+            {
+                category: "Inventory & Stock",
+                prompt: "What are the most popular sizes based on aggregated quantities sold across all products grouped over the last 60 days?",
+                insight: "Optimise size curves, prevent stockouts, and reduce overbuying in low-demand sizes.",
+                tags: ["Buying", "Monthly", "Analysis", "Shopify"]
+            },
+            {
+                category: "Inventory & Stock",
+                prompt: "Tell me about inventory risk for products sold through our highest converting ads.",
+                insight: "Forecast potential stockouts and plan replenishment or ad throttling.",
+                tags: ["Marketing", "Weekly", "Alert", "Meta", "Google"]
+            },
+            {
+                category: "Inventory & Stock",
+                prompt: "Give me the size distributions among our top sellers across markets.",
+                insight: "Optimise buying and reduce markdowns by geography.",
+                tags: ["Buying", "Monthly", "Analysis", "Shopify"]
+            },
+            {
+                category: "Inventory & Stock",
+                prompt: "What products are selling out in our Bondi Junction store?",
+                insight: "Trigger quick replenishment or transfers to prevent lost retail sales.",
+                tags: ["Operations", "Daily", "Alert", "Shopify"]
+            },
+            {
+                category: "Inventory & Stock",
+                prompt: "Which products risk selling out in next 21 days?",
+                insight: "Manage replenishment.",
+                tags: ["Buying", "Weekly", "Alert", "Shopify"]
+            },
+            {
+                category: "Inventory & Stock",
+                prompt: "Which ads drive traffic to constrained inventory?",
+                insight: "Prevent wasted spend.",
+                tags: ["Marketing", "Daily", "Alert", "Meta", "Google"]
+            },
+            {
+                category: "Inventory & Stock",
+                prompt: "Which SKUs are dead stock over 90 days?",
+                insight: "Plan markdowns or bundles.",
+                tags: ["Buying", "Quarterly", "Analysis", "Shopify"]
+            },
+            {
+                category: "Inventory & Stock",
+                prompt: "What are our top-performing products on Meta that are low in stock?",
+                insight: "Avoid overspending on ads driving traffic to low-stock products.",
+                tags: ["Marketing", "Daily", "Alert", "Meta"]
+            },
+
+            // ADVERTISING & CAMPAIGNS (14 prompts)
+            {
+                category: "Advertising & Campaigns",
+                prompt: "Which Meta ad sets are driving the most first-time customers with above-average AOV in the last 7 days?",
+                insight: "Double down on efficient acquisition.",
+                tags: ["Marketing", "Weekly", "Analysis", "Meta"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "Show me campaigns where CAC has increased more than 20% WoW but ROAS is still above break-even.",
+                insight: "Assess sustainable spend escalation.",
+                tags: ["Marketing", "Weekly", "Alert", "All Platforms"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "Identify campaigns or ad sets with the highest conversion rates (CVR) across paid and email channels.",
+                insight: "Optimize creative direction.",
+                tags: ["Marketing", "Weekly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "Highlight any Google Ads campaigns with diminishing returns over the last 7 days.",
+                insight: "Investigate underperforming channels.",
+                tags: ["Marketing", "Weekly", "Alert", "Google"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "Which ad campaigns are driving high traffic but low product add-to-carts?",
+                insight: "Suggest landing page or PDP testing.",
+                tags: ["Marketing", "Weekly", "Alert", "All Platforms"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "Which Meta creatives are showing signs of fatigue?",
+                insight: "Refresh ad creative before performance drops and avoid wasted spend.",
+                tags: ["Marketing", "Weekly", "Alert", "Meta"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "Which Google ads are showing signs of diminishing returns?",
+                insight: "Reallocate spend away from declining campaigns to maintain efficiency.",
+                tags: ["Marketing", "Weekly", "Alert", "Google"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "Get me the top products/product groups from campaigns with highest ad spend, conversions, or ROAS.",
+                insight: "Identify where money works hardest and optimise budgets accordingly.",
+                tags: ["Marketing", "Weekly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "Which campaign performed best in converting new customers during last BFCM season?",
+                insight: "Inform this year's BFCM acquisition strategy.",
+                tags: ["Marketing", "Quarterly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "What ads contribute most to new customers on that day?",
+                insight: "Double down on proven creative or messaging.",
+                tags: ["Marketing", "Daily", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "Which campaigns are profitable after factoring discounts + CAC?",
+                insight: "Avoid unprofitable spend.",
+                tags: ["Marketing", "Weekly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "What's our MER trend by week this quarter?",
+                insight: "Track spend efficiency.",
+                tags: ["Marketing", "Quarterly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "Which creatives drive the best payback period on ad spend?",
+                insight: "Scale what works faster.",
+                tags: ["Marketing", "Monthly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Advertising & Campaigns",
+                prompt: "What are my top-performing products on organic social?",
+                insight: "Amplify organic winners in paid campaigns and merchandising.",
+                tags: ["Marketing", "Weekly", "Analysis", "Social"]
+            },
+
+            // CUSTOMER ANALYTICS (11 prompts)
+            {
+                category: "Customer Analytics",
+                prompt: "What's the ideal product mix to maximize both retention and revenue?",
+                insight: "Identify which combinations of products retain customers and maximize revenue.",
+                tags: ["Buying", "Monthly", "Planning", "All Platforms"]
+            },
+            {
+                category: "Customer Analytics",
+                prompt: "Should we focus on improving retention of existing products or launching new ones?",
+                insight: "Prioritize resources — enhance what works or expand assortment strategically.",
+                tags: ["Buying", "Quarterly", "Planning", "All Platforms"]
+            },
+            {
+                category: "Customer Analytics",
+                prompt: "Show retention curves by product category (and by specific months like May–July).",
+                insight: "Identify which categories drive loyalty and how seasonality impacts behavior.",
+                tags: ["Buying", "Monthly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Customer Analytics",
+                prompt: "Compare CLV of customers who start with sale items vs. full-price items.",
+                insight: "Determine whether discount-driven acquisition reduces long-term value.",
+                tags: ["Marketing", "Quarterly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Customer Analytics",
+                prompt: "What is the customer lifetime value over the last 6 months for Category A vs. Category B buyers?",
+                insight: "Compare product category performance for long-term spending.",
+                tags: ["Buying", "Quarterly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Customer Analytics",
+                prompt: "Compare retention rates: customers who bought tops vs. dresses vs. both.",
+                insight: "Reveal if multi-category shoppers are more loyal.",
+                tags: ["Buying", "Monthly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Customer Analytics",
+                prompt: "Which products act as 'gateway products' that lead to long-term retention?",
+                insight: "Identify best introductory products for acquisition.",
+                tags: ["Buying", "Quarterly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Customer Analytics",
+                prompt: "Show me which customer segments are least profitable after factoring in returns and discount redemption.",
+                insight: "Adjust targeting and offers accordingly.",
+                tags: ["Finance", "Monthly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Customer Analytics",
+                prompt: "Which customer cohorts have highest repeat purchase rate in 90 days?",
+                insight: "Design targeted retention.",
+                tags: ["Marketing", "Quarterly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Customer Analytics",
+                prompt: "Which segments are most discount-sensitive?",
+                insight: "Personalise offers to protect margin.",
+                tags: ["Marketing", "Monthly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Customer Analytics",
+                prompt: "Which products are most commonly purchased on second order?",
+                insight: "Build win-back and replenishment campaigns.",
+                tags: ["Marketing", "Monthly", "Analysis", "Klaviyo"]
+            },
+
+            // PRODUCT PERFORMANCE (12 prompts)
+            {
+                category: "Product Performance",
+                prompt: "Which products have the highest return rates over the last 90 days, and how do they affect overall margin?",
+                insight: "Inform product buying or creative updates.",
+                tags: ["Buying", "Quarterly", "Analysis", "Shopify"]
+            },
+            {
+                category: "Product Performance",
+                prompt: "List products with high stock, low margin, and declining conversion rates over the last 14 days.",
+                insight: "Suggest discounting or bundling opportunities.",
+                tags: ["Buying", "Weekly", "Alert", "Shopify"]
+            },
+            {
+                category: "Product Performance",
+                prompt: "Identify SKUs where sell-through is below 20%, but ad spend remains above $500 per week.",
+                insight: "Flag inefficient spend tied to dead stock.",
+                tags: ["Marketing", "Weekly", "Alert", "All Platforms"]
+            },
+            {
+                category: "Product Performance",
+                prompt: "What are the top 20 grouped products' net sales in Klaviyo?",
+                insight: "Identify which products drive the most revenue via owned channels (email/SMS).",
+                tags: ["Marketing", "Monthly", "Analysis", "Klaviyo"]
+            },
+            {
+                category: "Product Performance",
+                prompt: "What are our 20 top-performing grouped products for new customers?",
+                insight: "Learn which products are acquisition heroes to feature in ads and site entry points.",
+                tags: ["Marketing", "Monthly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Product Performance",
+                prompt: "What are our 10 top-performing grouped products on Meta?",
+                insight: "Allocate budget toward high-performing paid social products to drive efficient CAC.",
+                tags: ["Marketing", "Monthly", "Analysis", "Meta"]
+            },
+            {
+                category: "Product Performance",
+                prompt: "Give me the top 5 product groups from each market.",
+                insight: "Understand regional demand differences for tailored stock allocation.",
+                tags: ["Buying", "Monthly", "Analysis", "Shopify"]
+            },
+            {
+                category: "Product Performance",
+                prompt: "What products drive sales and profit from those ads?",
+                insight: "Spotlight hero SKUs tied to acquisition and ensure inventory readiness.",
+                tags: ["Marketing", "Weekly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Product Performance",
+                prompt: "Which products have high traffic but low conversion this week?",
+                insight: "Fix underperforming PDPs/pricing.",
+                tags: ["Marketing", "Weekly", "Alert", "Shopify"]
+            },
+            {
+                category: "Product Performance",
+                prompt: "Which products drive high return rates or margin erosion?",
+                insight: "Improve buy/quality.",
+                tags: ["Buying", "Monthly", "Alert", "Shopify"]
+            },
+            {
+                category: "Product Performance",
+                prompt: "Which categories are trending upward vs last quarter?",
+                insight: "Adjust open-to-buy plans.",
+                tags: ["Buying", "Quarterly", "Analysis", "Shopify"]
+            },
+            {
+                category: "Product Performance",
+                prompt: "How have each of our stores performed over the last 7 days?",
+                insight: "Track location performance and adjust staffing, stock, or promotions.",
+                tags: ["Operations", "Weekly", "Analysis", "Shopify"]
+            },
+
+            // PROFITABILITY & FINANCE (9 prompts)
+            {
+                category: "Profitability & Finance",
+                prompt: "What's the projected profit for this month based on current sales trends, ad spend, and discounting activity?",
+                insight: "Enable real-time profitability forecasting.",
+                tags: ["Finance", "Monthly", "Planning", "All Platforms"]
+            },
+            {
+                category: "Profitability & Finance",
+                prompt: "Which product categories are driving the highest gross margin dollars over the past 30 days?",
+                insight: "Reallocate focus and budget to top performers.",
+                tags: ["Finance", "Monthly", "Analysis", "Shopify"]
+            },
+            {
+                category: "Profitability & Finance",
+                prompt: "Flag any products selling below breakeven margin after discounts and returns.",
+                insight: "Enforce profit guardrails.",
+                tags: ["Finance", "Weekly", "Alert", "Shopify"]
+            },
+            {
+                category: "Profitability & Finance",
+                prompt: "Compare this week's blended CAC to the same week last year and alert me if variance exceeds 15%.",
+                insight: "Benchmark performance over time.",
+                tags: ["Finance", "Weekly", "Alert", "All Platforms"]
+            },
+            {
+                category: "Profitability & Finance",
+                prompt: "Tell me the contribution margin from those top products sold that day.",
+                insight: "Ensure acquisition remains profitable at the product level.",
+                tags: ["Finance", "Daily", "Analysis", "Shopify"]
+            },
+            {
+                category: "Profitability & Finance",
+                prompt: "Which products or categories contributed the most profit last week vs. same week last year?",
+                insight: "Measure trading health.",
+                tags: ["Finance", "Weekly", "Analysis", "Shopify"]
+            },
+            {
+                category: "Profitability & Finance",
+                prompt: "What was our contribution margin % by day last week?",
+                insight: "Maintain daily profitability.",
+                tags: ["Finance", "Weekly", "Analysis", "Shopify"]
+            },
+            {
+                category: "Profitability & Finance",
+                prompt: "Which SKUs drove highest incremental revenue during last promotion?",
+                insight: "Inform promotion planning.",
+                tags: ["Finance", "Quarterly", "Analysis", "Shopify"]
+            },
+            {
+                category: "Profitability & Finance",
+                prompt: "What is our blended CAC vs contribution margin this month?",
+                insight: "Balance growth and profit.",
+                tags: ["Finance", "Monthly", "Analysis", "All Platforms"]
+            },
+
+            // CHANNEL PERFORMANCE (6 prompts)
+            {
+                category: "Channel Performance",
+                prompt: "Why is revenue up over the last 30 days?",
+                insight: "Diagnose what's working — product, channel, campaign, or promotion — and replicate it.",
+                tags: ["Finance", "Monthly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Channel Performance",
+                prompt: "From Q2, what day brings the highest number of new customers?",
+                insight: "Identify peak acquisition days for future campaign timing.",
+                tags: ["Marketing", "Quarterly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Channel Performance",
+                prompt: "Which digital channel drives most new customers with highest 60-day LTV?",
+                insight: "Guide channel allocation.",
+                tags: ["Marketing", "Quarterly", "Analysis", "All Platforms"]
+            },
+            {
+                category: "Channel Performance",
+                prompt: "What % of sales came from email/SMS vs paid?",
+                insight: "Measure CRM contribution.",
+                tags: ["Marketing", "Monthly", "Analysis", "Klaviyo"]
+            },
+            {
+                category: "Channel Performance",
+                prompt: "Which automated flow generated most profit last month?",
+                insight: "Optimise lifecycle flows.",
+                tags: ["Marketing", "Monthly", "Analysis", "Klaviyo"]
+            },
+
+            // CONVERSION & CRO (5 prompts)
+            {
+                category: "Conversion & CRO",
+                prompt: "Show me where conversion rate is dropping in the funnel over the last 30 days.",
+                insight: "Diagnose friction and unlock revenue.",
+                tags: ["Marketing", "Monthly", "Analysis", "Shopify"]
+            },
+            {
+                category: "Conversion & CRO",
+                prompt: "Which payment/shipping methods are linked to highest abandonment?",
+                insight: "Reduce checkout drop-off.",
+                tags: ["Operations", "Monthly", "Alert", "Shopify"]
+            },
+            {
+                category: "Conversion & CRO",
+                prompt: "Which bundles or upsells add most AOV in last 14 days?",
+                insight: "Boost basket size.",
+                tags: ["Marketing", "Weekly", "Optimization", "Shopify"]
+            },
+            {
+                category: "Conversion & CRO",
+                prompt: "Which landing pages have highest bounce and lowest conversion?",
+                insight: "Prioritise CRO fixes.",
+                tags: ["Marketing", "Weekly", "Alert", "All Platforms"]
+            },
+            {
+                category: "Conversion & CRO",
+                prompt: "What's sell-through of homepage vs non-homepage products?",
+                insight: "Measure homepage impact.",
+                tags: ["Marketing", "Weekly", "Analysis", "Shopify"]
+            },
+            {
+                category: "Conversion & CRO",
+                prompt: "Which products are most abandoned in cart?",
+                insight: "Improve recovery flows.",
+                tags: ["Marketing", "Weekly", "Alert", "Shopify"]
+            }
+        ];
+
+        // Get unique categories
+        const categories = [...new Set(prompts.map(p => p.category))];
+
+        // State
+        let activeCategory = null;
+        let searchQuery = '';
+
+        // Initialize
+        function init() {
+            renderCategoryFilters();
+            renderPrompts();
+
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                searchQuery = e.target.value.toLowerCase();
+                renderPrompts();
+            });
+        }
+
+        function renderCategoryFilters() {
+            const container = document.getElementById('categoryFilters');
+            
+            const allBtn = document.createElement('button');
+            allBtn.className = 'filter-btn active';
+            allBtn.textContent = 'All';
+            allBtn.onclick = () => setCategory(null);
+            container.appendChild(allBtn);
+
+            categories.forEach(category => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.textContent = category;
+                btn.onclick = () => setCategory(category);
+                container.appendChild(btn);
+            });
+        }
+
+        function setCategory(category) {
+            activeCategory = category;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((category === null && btn.textContent === 'All') || btn.textContent === category) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            renderPrompts();
+        }
+
+        function filterPrompts() {
+            return prompts.filter(p => {
+                const matchesCategory = !activeCategory || p.category === activeCategory;
+                const matchesSearch = !searchQuery || 
+                    p.prompt.toLowerCase().includes(searchQuery) ||
+                    p.category.toLowerCase().includes(searchQuery) ||
+                    p.insight.toLowerCase().includes(searchQuery) ||
+                    p.tags.some(tag => tag.toLowerCase().includes(searchQuery));
+                return matchesCategory && matchesSearch;
+            });
+        }
+
+        function copyPrompt(promptText, btn) {
+            navigator.clipboard.writeText(promptText).then(() => {
+                btn.textContent = '✓ Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy Prompt';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function renderPrompts() {
+            const container = document.getElementById('promptsContainer');
+            const resultsInfo = document.getElementById('resultsInfo');
+            const filtered = filterPrompts();
+
+            resultsInfo.textContent = `Showing ${filtered.length} of ${prompts.length} prompts`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results" style="grid-column: 1 / -1;">
+                        <div class="no-results-icon">🔍</div>
+                        <h3>No prompts found</h3>
+                        <p>Try adjusting your search or filters</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map((p, index) => `
+                <div class="prompt-card">
+                    <div class="prompt-header">
+                        <span class="prompt-category">${p.category}</span>
+                    </div>
+                    <div class="prompt-text">${p.prompt}</div>
+                    <div class="prompt-insight"><strong>💡 Insight:</strong> ${p.insight}</div>
+                    <div class="prompt-tags">
+                        ${p.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                    <button class="copy-btn" onclick="copyPrompt(\`${p.prompt.replace(/`/g, '\\`')}\`, this)">Copy Prompt</button>
+                </div>
+            `).join('');
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>
